@@ -16,6 +16,7 @@ namespace LABA4OOP
         private Dictionary<int, Size> shapeSizes = new();
         private Dictionary<int, (Point start, Point end)> segmentPoints = new();
         private HashSet<int> selectedIndices = new();
+        private bool suppressSelection = false;
 
         private Point startPoint;
         private Point endPoint;
@@ -98,28 +99,38 @@ namespace LABA4OOP
         {
             bool isCtrlPressed = (ModifierKeys & Keys.Control) == Keys.Control;
             bool clickedOnShape = false;
-
-            for (int i = shapes.Count - 1; i >= 0; i--)
+            if (!suppressSelection)
             {
-                var (shape, location) = shapes[i];
-                if (IsPointInsideShape(i, shape, location, e.Location))
+                if (isCtrlPressed)
                 {
-                    clickedOnShape = true;
-
-                    if (isCtrlPressed)
+                    for (int i = shapes.Count - 1; i >= 0; i--)
                     {
-                        if (!selectedIndices.Contains(i))
+                        var (shape, location) = shapes[i];
+                        if (IsPointInsideShape(i, shape, location, e.Location))
+                        {
+                            clickedOnShape = true;
+                            if (!selectedIndices.Contains(i))
+                                selectedIndices.Add(i);
+                        }
+                    }
+                }
+                else
+                {
+                    for (int i = shapes.Count - 1; i >= 0; i--)
+                    {
+                        var (shape, location) = shapes[i];
+                        if (IsPointInsideShape(i, shape, location, e.Location))
+                        {
+                            clickedOnShape = true;
+                            selectedIndices.Clear();
                             selectedIndices.Add(i);
+                            break; // Только первую фигуру без Ctrl
+                        }
                     }
-                    else
-                    {
-                        selectedIndices.Clear();
-                        selectedIndices.Add(i);
-                    }
-
-                    break; 
                 }
             }
+
+
 
             if (!clickedOnShape)
             {
@@ -144,8 +155,13 @@ namespace LABA4OOP
                     shapes.Add((currentShape, e.Location));
                     shapeColors.Add(Color.Black);
                     shapeSizes[shapes.Count - 1] = new Size(50, 50);
-                    selectedIndices.Add(shapes.Count - 1);
+                    suppressSelection = true;
+
+                    selectedIndices.Clear();
+                    Invalidate();
                 }
+
+
             }
 
             Invalidate();
@@ -184,11 +200,10 @@ namespace LABA4OOP
                     shapeColors.Add(Color.Black);
                     shapeSizes[shapes.Count - 1] = size;
                 }
-
-                selectedIndices.Clear();
-                selectedIndices.Add(shapes.Count - 1);
                 Invalidate();
+
             }
+            suppressSelection = false;
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
