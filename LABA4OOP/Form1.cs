@@ -22,24 +22,6 @@ namespace LABA4OOP
         private Point endPoint;
         private bool isDrawing = false;
 
-        private Rectangle GetShapeBounds(int index)
-        {
-            if (shapes[index].shape == ShapeType.Segment && segmentPoints.TryGetValue(index, out var seg))
-            {
-                int minX = Math.Min(seg.start.X, seg.end.X);
-                int minY = Math.Min(seg.start.Y, seg.end.Y);
-                int maxX = Math.Max(seg.start.X, seg.end.X);
-                int maxY = Math.Max(seg.start.Y, seg.end.Y);
-                return new Rectangle(minX, minY, maxX - minX, maxY - minY);
-            }
-            else
-            {
-                var (shape, location) = shapes[index];
-                Size size = shapeSizes.ContainsKey(index) ? shapeSizes[index] : new Size(50, 50);
-                return new Rectangle(location.X - size.Width / 2, location.Y - size.Height / 2, size.Width, size.Height);
-            }
-        }
-
         public Form1()
         {
             InitializeComponent();
@@ -58,6 +40,17 @@ namespace LABA4OOP
         private void Rectangle_Click(object sender, EventArgs e) => currentShape = ShapeType.Rectangle;
         private void Triangle_Click(object sender, EventArgs e) => currentShape = ShapeType.Triangle;
         private void Segment_Click(object sender, EventArgs e) => currentShape = ShapeType.Segment;
+
+        private bool IsPointInEllipse(Point center, int width, int height, Point p)
+        {
+            double dx = p.X - center.X;
+            double dy = p.Y - center.Y;
+            double a = width / 2.0;
+            double b = height / 2.0;
+
+            return (dx * dx) / (a * a) + (dy * dy) / (b * b) <= 1.0;
+        }
+
 
         private void Color_Click(object sender, EventArgs e)
         {
@@ -135,31 +128,15 @@ namespace LABA4OOP
                 }
                 else
                 {
+                    selectedIndices.Clear();
                     for (int i = shapes.Count - 1; i >= 0; i--)
                     {
                         var (shape, location) = shapes[i];
                         if (IsPointInsideShape(i, shape, location, e.Location))
                         {
                             clickedOnShape = true;
-                            selectedIndices.Clear();
                             selectedIndices.Add(i);
-
-                            Rectangle baseBounds = GetShapeBounds(i);
-
-                            for (int j = 0; j < shapes.Count; j++)
-                            {
-                                if (j == i) continue;
-                                Rectangle otherBounds = GetShapeBounds(j);
-
-                                if (baseBounds.IntersectsWith(otherBounds))
-                                {
-                                    selectedIndices.Add(j);
-                                }
-                            }
-
-                            break;
                         }
-
                     }
                 }
             }
@@ -182,10 +159,7 @@ namespace LABA4OOP
                     endPoint = e.Location;
                     isDrawing = true;
                 }
-                else if (currentShape != ShapeType.None &&
-                         currentShape != ShapeType.Rectangle &&
-                         currentShape != ShapeType.Ellipse &&
-                         currentShape != ShapeType.Segment)
+                else if (currentShape != ShapeType.None)
                 {
                     shapes.Add((currentShape, e.Location));
                     shapeColors.Add(Color.Black);
@@ -195,7 +169,6 @@ namespace LABA4OOP
                     selectedIndices.Clear();
                     Invalidate();
                 }
-
 
 
             }
@@ -330,17 +303,19 @@ namespace LABA4OOP
 
             return shape switch
             {
-                ShapeType.Circle or ShapeType.Square or ShapeType.Ellipse or ShapeType.Rectangle => bounds.Contains(click),
+                ShapeType.Circle or ShapeType.Ellipse => IsPointInEllipse(center, w, h, click),
+                ShapeType.Square or ShapeType.Rectangle => bounds.Contains(click),
                 ShapeType.Triangle => PointInPolygon(click, new[] {
-                    new Point(center.X, center.Y - h / 2),
-                    new Point(center.X - w / 2, center.Y + h / 2),
-                    new Point(center.X + w / 2, center.Y + h / 2)
-                }),
+            new Point(center.X, center.Y - h / 2),
+            new Point(center.X - w / 2, center.Y + h / 2),
+            new Point(center.X + w / 2, center.Y + h / 2)
+        }),
                 ShapeType.Segment => segmentPoints.TryGetValue(index, out var segPoints) &&
                                      DistanceToSegment(click, segPoints.start, segPoints.end) <= 5.0,
                 _ => false
             };
         }
+
 
         private double DistanceToSegment(Point p, Point a, Point b)
         {
@@ -394,7 +369,7 @@ namespace LABA4OOP
 
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            int moveStep = 5; 
+            int moveStep = 5;
 
             if (keyData == Keys.Oemplus || keyData == Keys.Add)
             {
