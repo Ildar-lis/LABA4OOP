@@ -22,6 +22,24 @@ namespace LABA4OOP
         private Point endPoint;
         private bool isDrawing = false;
 
+        private Rectangle GetShapeBounds(int index)
+        {
+            if (shapes[index].shape == ShapeType.Segment && segmentPoints.TryGetValue(index, out var seg))
+            {
+                int minX = Math.Min(seg.start.X, seg.end.X);
+                int minY = Math.Min(seg.start.Y, seg.end.Y);
+                int maxX = Math.Max(seg.start.X, seg.end.X);
+                int maxY = Math.Max(seg.start.Y, seg.end.Y);
+                return new Rectangle(minX, minY, maxX - minX, maxY - minY);
+            }
+            else
+            {
+                var (shape, location) = shapes[index];
+                Size size = shapeSizes.ContainsKey(index) ? shapeSizes[index] : new Size(50, 50);
+                return new Rectangle(location.X - size.Width / 2, location.Y - size.Height / 2, size.Width, size.Height);
+            }
+        }
+
         public Form1()
         {
             InitializeComponent();
@@ -99,6 +117,7 @@ namespace LABA4OOP
         {
             bool isCtrlPressed = (ModifierKeys & Keys.Control) == Keys.Control;
             bool clickedOnShape = false;
+
             if (!suppressSelection)
             {
                 if (isCtrlPressed)
@@ -124,13 +143,26 @@ namespace LABA4OOP
                             clickedOnShape = true;
                             selectedIndices.Clear();
                             selectedIndices.Add(i);
-                            break; // Только первую фигуру без Ctrl
+
+                            Rectangle baseBounds = GetShapeBounds(i);
+
+                            for (int j = 0; j < shapes.Count; j++)
+                            {
+                                if (j == i) continue;
+                                Rectangle otherBounds = GetShapeBounds(j);
+
+                                if (baseBounds.IntersectsWith(otherBounds))
+                                {
+                                    selectedIndices.Add(j);
+                                }
+                            }
+
+                            break;
                         }
+
                     }
                 }
             }
-
-
 
             if (!clickedOnShape)
             {
@@ -150,7 +182,10 @@ namespace LABA4OOP
                     endPoint = e.Location;
                     isDrawing = true;
                 }
-                else if (currentShape != ShapeType.None)
+                else if (currentShape != ShapeType.None &&
+                         currentShape != ShapeType.Rectangle &&
+                         currentShape != ShapeType.Ellipse &&
+                         currentShape != ShapeType.Segment)
                 {
                     shapes.Add((currentShape, e.Location));
                     shapeColors.Add(Color.Black);
@@ -160,6 +195,7 @@ namespace LABA4OOP
                     selectedIndices.Clear();
                     Invalidate();
                 }
+
 
 
             }
