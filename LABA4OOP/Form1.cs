@@ -25,7 +25,7 @@ namespace LABA4OOP
         public Form1()
         {
             InitializeComponent();
-
+            this.DoubleBuffered = true; 
             this.KeyPreview = true;
 
             this.MouseDown += Form1_MouseDown;
@@ -33,6 +33,7 @@ namespace LABA4OOP
             this.MouseUp += Form1_MouseUp;
             this.Paint += Form1_Paint;
         }
+
 
         private void Circle_Click(object sender, EventArgs e) => currentShape = ShapeType.Circle;
         private void Square_Click(object sender, EventArgs e) => currentShape = ShapeType.Square;
@@ -227,7 +228,7 @@ namespace LABA4OOP
                 Size size = shapeSizes.ContainsKey(i) ? shapeSizes[i] : new Size(50, 50);
 
                 Brush brush = new SolidBrush(isSelected ? Color.Blue : shapeColor);
-                Pen pen = new Pen(isSelected ? Color.Blue : shapeColor, 2);
+                Pen pen = new Pen(isSelected ? Color.Red : shapeColor, isSelected ? 3 : 2);
 
                 int w = size.Width;
                 int h = size.Height;
@@ -236,29 +237,35 @@ namespace LABA4OOP
                 {
                     case ShapeType.Circle:
                         g.FillEllipse(brush, location.X - w / 2, location.Y - h / 2, w, h);
+                        g.DrawEllipse(pen, location.X - w / 2, location.Y - h / 2, w, h);
                         break;
                     case ShapeType.Square:
                         g.FillRectangle(brush, location.X - w / 2, location.Y - h / 2, w, h);
+                        g.DrawRectangle(pen, location.X - w / 2, location.Y - h / 2, w, h);
                         break;
                     case ShapeType.Ellipse:
                         g.FillEllipse(brush, location.X - w / 2, location.Y - h / 2, w, h);
+                        g.DrawEllipse(pen, location.X - w / 2, location.Y - h / 2, w, h);
                         break;
                     case ShapeType.Rectangle:
                         g.FillRectangle(brush, location.X - w / 2, location.Y - h / 2, w, h);
+                        g.DrawRectangle(pen, location.X - w / 2, location.Y - h / 2, w, h);
                         break;
                     case ShapeType.Triangle:
                         Point[] triangle = {
-                            new Point(location.X, location.Y - h / 2),
-                            new Point(location.X - w / 2, location.Y + h / 2),
-                            new Point(location.X + w / 2, location.Y + h / 2)
-                        };
+            new Point(location.X, location.Y - h / 2),
+            new Point(location.X - w / 2, location.Y + h / 2),
+            new Point(location.X + w / 2, location.Y + h / 2)
+        };
                         g.FillPolygon(brush, triangle);
+                        g.DrawPolygon(pen, triangle);
                         break;
                     case ShapeType.Segment:
                         if (segmentPoints.TryGetValue(i, out var seg))
                             g.DrawLine(pen, seg.start, seg.end);
                         break;
                 }
+
 
                 brush.Dispose();
                 pen.Dispose();
