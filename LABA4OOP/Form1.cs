@@ -488,10 +488,10 @@ namespace LABA4OOP
                 if (keyData == Keys.A) dx = -moveStep;
                 if (keyData == Keys.D) dx = moveStep;
 
-                bool canMoveAll = true;
-
-                foreach (int index in selectedIndices)
+                foreach (int index in selectedIndices.ToList()) // Копируем, чтобы безопасно модифицировать selectedIndices
                 {
+                    bool canMove = true;
+
                     if (shapes[index].shape == ShapeType.Segment)
                     {
                         if (segmentPoints.TryGetValue(index, out var seg))
@@ -499,8 +499,7 @@ namespace LABA4OOP
                             if (!IsPointInsideClient(seg.start.X + dx, seg.start.Y + dy) ||
                                 !IsPointInsideClient(seg.end.X + dx, seg.end.Y + dy))
                             {
-                                canMoveAll = false;
-                                break;
+                                canMove = false;
                             }
                         }
                     }
@@ -515,24 +514,18 @@ namespace LABA4OOP
                             newCenter.X + size.Width / 2 > ClientSize.Width ||
                             newCenter.Y + size.Height / 2 > ClientSize.Height)
                         {
-                            canMoveAll = false;
-                            break;
+                            canMove = false;
                         }
                     }
-                }
 
-                if (canMoveAll)
-                {
-                    foreach (int index in selectedIndices)
+                    if (canMove)
                     {
                         if (shapes[index].shape == ShapeType.Segment)
                         {
-                            if (segmentPoints.TryGetValue(index, out var seg))
-                            {
-                                seg.start.Offset(dx, dy);
-                                seg.end.Offset(dx, dy);
-                                segmentPoints[index] = seg;
-                            }
+                            var seg = segmentPoints[index];
+                            seg.start.Offset(dx, dy);
+                            seg.end.Offset(dx, dy);
+                            segmentPoints[index] = seg;
                         }
                         else
                         {
@@ -540,11 +533,15 @@ namespace LABA4OOP
                             shapes[index] = (shape, new Point(location.X + dx, location.Y + dy));
                         }
                     }
-                    Invalidate();
+                    else
+                    {
+                    }
                 }
 
+                Invalidate();
                 return true;
             }
+
 
             return base.ProcessCmdKey(ref msg, keyData);
         }
